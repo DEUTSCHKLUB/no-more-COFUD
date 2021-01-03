@@ -1,0 +1,44 @@
+$enable-flex:               true;
+$enable-grid-classes:       true;
+
+// bootstrap stuff included from node_modules/bootstrap/scss
+@import '_functions.scss';
+@import '_variables.scss';
+@import 'imports/_variables'; // my custom variables
+@import '_mixins.scss';
+@import '_reboot.scss';
+@import '_grid.scss';
+@import '_forms.scss';
+@import 'utilities/_flex.scss';
+@import 'utilities/_text.scss';
+@import 'utilities/_spacing.scss';
+@import 'utilities/_sizing.scss';
+
+// components
+// @import 'imports/_html';
+
+*{
+    box-sizing: border-box;
+    scrollbar-color:$red transparent;
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent !important;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: $white;
+      border-radius: 20px;
+      border: 3px solid $red;
+    }
+}
+
+::-moz-selection { /* Code for Firefox */
+    color: $red;
+    background: $yellow;
+  }
+  
+  ::selection {
+    color: $red;
+    background: $yellow;
+  }

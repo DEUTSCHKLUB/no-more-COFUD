@@ -1,0 +1,31 @@
+extends layout
+
+block append head
+//- styles here
+block content
+	#nofud-wrap.container
+		.row.align-items-start.justify-content-center
+			#intro.col-12
+				h1 No More COFUD makes the best of a bad situation
+				h4 How many people want up in here?
+				input#numPeople(type="number", name="numPeople", placeholder="How many people gotta go in here?", value="5")
+			.col-12
+				canvas#nofud-canvas(width="800" height="600" style="border:1px solid red")
+			#commands.col-12
+				button#addNewFButton
+					svg.bi(width="22" height="22" fill="currentColor")
+						use(xlink:href="/icons.svg#unlock-fill")
+					|Add Movable Object
+				button#addNewWButton
+					svg.bi(width="22" height="22" fill="currentColor")
+						use(xlink:href="/icons.svg#lock-fill")
+					|Add Stationary Object
+				button#addNewPButton
+					svg.bi(width="22" height="22" fill="currentColor")
+						use(xlink:href="/icons.svg#person-fill")
+					|Add Person Object
+				button#resetButton
+					|Reset Room
+				button#calculateButton
+					|Calculate NOFUD	
+block append footer
