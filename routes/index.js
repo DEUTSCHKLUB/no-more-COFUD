@@ -38,7 +38,8 @@ router.post("/calc", function(req, res) {
       filteredObj.push(filtered);
     }
 
-    res.json(JSON.stringify(filteredObj));
+    res.json(JSON.stringify(req.body.canvas.objects));
+    // res.json(JSON.stringify(filteredObj)); //if you want to minify it a bit
 });
 
 module.exports = router;
