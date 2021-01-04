@@ -5,6 +5,7 @@
             addNewFButton = d.querySelector("#addNewFButton"),
             addNewWButton = d.querySelector("#addNewWButton"),
             addNewPButton = d.querySelector("#addNewPButton"),
+            eraseButton = d.querySelector("#eraseButton"),
             resetButton = d.querySelector("#resetButton"),
             calculateButton = d.querySelector("#calculateButton"),
             numPeople = d.querySelector("#numPeople"),
@@ -17,7 +18,7 @@
         var newWidth = (Math.round(options.target.getScaledWidth() * grid) / grid);
         var newHeight = (Math.round(options.target.getScaledHeight() * grid) / grid);
 
-        if (options.target.getWidth() !== newWidth) {
+        if (options.target.getWidth() !== newWidth || options.target.getHeight() !== newHeight) {
             options.target.set({ width: newWidth, height: newHeight, scaleX: 1, scaleY: 1});
         }
     });
@@ -337,6 +338,11 @@
         nfc.setActiveObject(obj);
     }
 
+    function removeSelectedObject(){
+        console.log(`Active: ${nfc.getActiveObject()}`);
+        nfc.remove(nfc.getActiveObject());
+    }
+
     function createObstacle(type="furniture",w=100,h=100){
         let obst = new fabric.Rect({
             id: `${type}`,
@@ -382,6 +388,9 @@
         },false);
         addNewPButton.addEventListener('click', () =>{
             addToNOFUD(createPerson());
+        },false);
+        eraseButton.addEventListener('click', () =>{
+            removeSelectedObject();
         },false);
         resetButton.addEventListener('click', () =>{
             nfc.clear();
