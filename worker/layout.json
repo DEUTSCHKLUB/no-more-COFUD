@@ -1,0 +1,58 @@
+[
+    {
+        "left": 50,
+        "top": 50,
+        "width": 100,
+        "height": 100,
+        "fill": "yellow",
+        "id": "furniture"
+    },
+    {
+        "left": 50,
+        "top": 450,
+        "width": 100,
+        "height": 100,
+        "fill": "yellow",
+        "id": "furniture"
+    },
+    {
+        "left": 600,
+        "top": 0,
+        "width": 100,
+        "height": 100,
+        "fill": "purple",
+        "id": "wall"
+    },
+    {
+        "left": 700,
+        "top": 100,
+        "width": 50,
+        "height": 50,
+        "fill": "aqua",
+        "id": "person"
+    },
+    {
+        "left": 700,
+        "top": 450,
+        "width": 50,
+        "height": 50,
+        "fill": "aqua",
+        "id": "person"
+    },
+    {
+        "left": 250,
+        "top": 50,
+        "width": 100,
+        "height": 100,
+        "fill": "yellow",
+        "id": "furniture"
+    },
+    {
+        "left": 250,
+        "top": 450,
+        "width": 100,
+        "height": 100,
+        "fill": "yellow",
+        "id": "furniture"
+    }
+]

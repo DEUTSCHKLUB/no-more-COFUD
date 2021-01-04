@@ -5,6 +5,7 @@ from math import sqrt
 from ortools.sat.python import cp_model
 import matplotlib.pyplot as plt
 from itertools import combinations
+import json
 
 model = cp_model.CpModel()
 
@@ -34,25 +35,55 @@ class RoomObject:
 
 distance = 7
 distanceSquared = distance ** 2
-roomWidth = 15
-roomHeight = 15
+roomWidth = 16
+roomHeight = 12
+
+extra_people = 4
+room_data = []
+
+
+def ParseJson(filePath):
+    with open(filePath) as f:
+        data = json.load(f)
+
+    for item in data:
+        newWidth = int(item['width']) // 50
+        newHeight = int(item['height']) // 50
+        newX = int(item['left']) // 50
+        newY = int(item['top']) // 50
+        fill = item['fill']
+        itemId = item['id']
+        holderType = HolderType.Empty
+
+        if itemId == 'furniture':
+            holderType = HolderType.Furniture
+        elif itemId == 'person':
+            holderType = HolderType.Person
+        elif itemId == 'wall':
+            holderType = HolderType.Wall
+
+        # if it's yellow it means it's movable furniture, so blank out the x and y
+        if fill == 'yellow':
+            newX = -1
+            newY = -1
+
+        print(f"Trying to add rectangle with w:{newWidth} h:{newHeight} x:{newX} y:{newY} type{holderType}")
+
+        newRectangle = Rectangle(newWidth, newHeight, newX, newY, holderType)
+        room_data.append(newRectangle)
+
+    # now add the movable people
+    for num in range(extra_people):
+        newRectangle = Rectangle(1, 1, -1, -1, HolderType.Person)
+        room_data.append(newRectangle)
+
+
+
+def WriteJson():
+    print('not done yet')
+
 
 def CofudLayout():
-    # if x and y are -1 then the object can be moved
-    rects_data = [
-        Rectangle(1, 1, -1, -1, HolderType.Person),
-        Rectangle(1, 1, -1, -1, HolderType.Person),
-        Rectangle(1, 1, -1, -1, HolderType.Person),
-        Rectangle(1, 1, -1, -1, HolderType.Person),
-        Rectangle(1, 1, -1, -1, HolderType.Person),
-        Rectangle(1, 1, -1, -1, HolderType.Person),
-        Rectangle(1, 1, -1, -1, HolderType.Person),
-        Rectangle(1, 1, -1, -1, HolderType.Person),
-        Rectangle(1, 1, -1, -1, HolderType.Person),
-        Rectangle(3, 12, -1, -1, HolderType.Furniture),
-        Rectangle(12, 3, -1, -1, HolderType.Furniture)
-    ]
-
     room = Rectangle(roomWidth, roomHeight, 0, 0, HolderType.Empty)
     print(f"Room Size: {room.width}x{room.height}")
 
@@ -65,7 +96,7 @@ def CofudLayout():
 
     
     # Generate movable furniture
-    for rect_id, rect in enumerate(rects_data):
+    for rect_id, rect in enumerate(room_data):
         area = rect.width * rect.height
         print(f"Rect: {rect.width}x{rect.height}, Area: {area}")
 
@@ -121,7 +152,7 @@ def CofudLayout():
             raise Exception("rectangle X and Y must both be -1 or both be > 1")
 
     # Now lets make all possible combinations and make a distance between them
-    combos = list(combinations(range(len(rects_data)), 2))
+    combos = list(combinations(range(len(room_data)), 2))
 
     print(combos) 
 
@@ -222,7 +253,7 @@ def CofudLayout():
         Array = [ [0] * roomWidth for i in range(roomHeight) ]
 
         # update array with solution coords
-        for rect_id, rect in enumerate(rects_data):
+        for rect_id, rect in enumerate(room_data):
             #print(solver.Value(all_vars[rect_id].x1))
             x1=solver.Value(all_vars[rect_id].x1)
             y1=solver.Value(all_vars[rect_id].y1)
@@ -250,4 +281,5 @@ def CofudLayout():
         
             
 
+ParseJson('layout.json')
 CofudLayout()
