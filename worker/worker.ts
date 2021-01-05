@@ -154,7 +154,7 @@ function parseIntParam(value: string) {
 console.log(process.argv);
 
 program
-  .option('--subnet-tag <subnet>', 'set subnet name', 'community.doc')
+  .option('--subnet-tag <subnet>', 'set subnet name', 'community.3')
   .option('-d, --debug', 'output extra debugging')
   .requiredOption('-h, --hash <hash>', 'golem VM image hash', '8b71496574f9824d72c09e85f63aa578cbdf1f42bb2ad95b93556f7a')
   .requiredOption('-j, --job <string>', 'ID of job to process')
