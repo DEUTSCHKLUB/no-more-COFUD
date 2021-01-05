@@ -6,6 +6,19 @@ from ortools.sat.python import cp_model
 import matplotlib.pyplot as plt
 from itertools import combinations
 import json
+from json import JSONEncoder
+import sys
+ 
+if len(sys.argv) != 4:
+    raise ValueError('Provide people count, input JSON file, output JSON file')
+ 
+print(f'Script Name is {sys.argv}')
+
+
+extra_people = int(sys.argv[1])
+
+jsonPath = sys.argv[2]
+outputPath = sys.argv[3]
 
 model = cp_model.CpModel()
 
@@ -24,21 +37,28 @@ class Rectangle:
         self.holderType = holderType
 
 class RoomObject:
-    def __init__(self, x1, y1, x2, y2, x_interval, y_interval, holderType):
+    def __init__(self, rectangle, x1, y1, x2, y2, x_interval, y_interval):
+        self.rectangle = rectangle
         self.x1 = x1
         self.x2 = x2
         self.y1 = y1
         self.y2 = y2
         self.x_interval = x_interval
         self.y_interval = y_interval
-        self.holderType = holderType
+
+    def toJson(self, left, top):
+        return {"left": left,
+        "top": top,
+        "width": self.rectangle.width,
+        "height": self.rectangle.height,
+        "id": self.rectangle.holderType.name}
 
 distance = 7
 distanceSquared = distance ** 2
 roomWidth = 16
 roomHeight = 12
 
-extra_people = 4
+
 room_data = []
 
 
@@ -47,10 +67,10 @@ def ParseJson(filePath):
         data = json.load(f)
 
     for item in data:
-        newWidth = int(item['width']) // 50
-        newHeight = int(item['height']) // 50
-        newX = int(item['left']) // 50
-        newY = int(item['top']) // 50
+        newWidth = int(round(int(item['width']) // 50))
+        newHeight = int(round(int(item['height']) // 50))
+        newX = int(round(int(item['left']) // 50))
+        newY = int(round(int(item['top']) // 50))
         fill = item['fill']
         itemId = item['id']
         holderType = HolderType.Empty
@@ -115,13 +135,13 @@ def CofudLayout():
             y_interval_var = model.NewIntervalVar(y1_var, rect.height, y2_var, 'y_interval' + suffix)
 
             all_vars[rect_id] = RoomObject(
+                rect,
                 x1_var, 
                 y1_var, 
                 x2_var, 
                 y2_var, 
                 x_interval_var,
-                y_interval_var,
-                rect.holderType
+                y_interval_var
             )
 
             x_intervals.append(x_interval_var)
@@ -140,13 +160,13 @@ def CofudLayout():
             y_intervals.append(y_interval_var)
 
             all_vars[rect_id] = RoomObject(
+                rect,
                 x1_var, 
                 y1_var, 
                 x2_var, 
                 y2_var, 
                 x_interval_var,
-                y_interval_var,
-                rect.holderType
+                y_interval_var
             )
         else:
             raise Exception("rectangle X and Y must both be -1 or both be > 1")
@@ -166,7 +186,7 @@ def CofudLayout():
         leftItem = all_vars[listSet[0]]
         rightItem = all_vars[listSet[1]]
 
-        if leftItem.holderType == HolderType.Person and rightItem.holderType == HolderType.Person:
+        if leftItem.rectangle.holderType == HolderType.Person and rightItem.rectangle.holderType == HolderType.Person:
             # print(f"Adding distances between {listSet[0]} and {listSet[1]} because both are people")
             
             currentDistanceId = currentDistanceId + 1
@@ -237,7 +257,9 @@ def CofudLayout():
     # Solve model
     solver = cp_model.CpSolver()
 
+    # hard core to using 4 cores for 5 minutes
     solver.parameters.num_search_workers = 4
+    solver.parameters.max_time_in_seconds = 300.0
 
     #model.Maximize(sum(distanceVariables))
     status = solver.Solve(model)
@@ -249,20 +271,36 @@ def CofudLayout():
     print(f"OPTIMAL: {cp_model.OPTIMAL}")
     print(f"Status: {status}")
 
+    result_dict = {"status": 0,
+    "items": []
+    }
+
     if status == cp_model.OPTIMAL:
-        Array = [ [0] * roomWidth for i in range(roomHeight) ]
+        Array = [ ["0"] * roomWidth for i in range(roomHeight) ]
+
+        result_dict["status"] = 1
+        result_dict["items"] = []        
 
         # update array with solution coords
         for rect_id, rect in enumerate(room_data):
             #print(solver.Value(all_vars[rect_id].x1))
-            x1=solver.Value(all_vars[rect_id].x1)
-            y1=solver.Value(all_vars[rect_id].y1)
-            x2=solver.Value(all_vars[rect_id].x2)
-            y2=solver.Value(all_vars[rect_id].y2)
+
+            resultObject = all_vars[rect_id]
+
+            x1=solver.Value(resultObject.x1)
+            y1=solver.Value(resultObject.y1)
+            x2=solver.Value(resultObject.x2)
+            y2=solver.Value(resultObject.y2)
+
+            jsonData = resultObject.toJson(x1, y1)
+
+            print(f"appending {jsonData}")
+            result_dict["items"].append(jsonData)
+
             print(f"{rect_id}: {x1}, {y1} -> {x2}, {y2}")
-            
-            for x in range(solver.Value(all_vars[rect_id].x1), solver.Value(all_vars[rect_id].x2)):
-                for y in range(solver.Value(all_vars[rect_id].y1), solver.Value(all_vars[rect_id].y2)):
+
+            for x in range(x1, x2):
+                for y in range(y1, y2):
                     # This seems backwards, but hey, it works
                     Array[y][x] = currentcolor
 
@@ -274,12 +312,15 @@ def CofudLayout():
                 print(y, end="")
             print("\n", end="")
 
-        plt.imshow(Array)
-        plt.show()
+        # Uncomment this to view as an image in a desktop environment
+        #plt.imshow(Array)
+        #plt.show()
     else:
         print("No solution found :(")
-        
-            
 
-ParseJson('layout.json')
+    # export json results
+    with open(outputPath, 'w') as f:
+        json.dump(result_dict, f)
+
+ParseJson(jsonPath)
 CofudLayout()
