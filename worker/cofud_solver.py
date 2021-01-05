@@ -67,19 +67,19 @@ def ParseJson(filePath):
         data = json.load(f)
 
     for item in data:
-        newWidth = int(round(int(item['width']) // 50))
-        newHeight = int(round(int(item['height']) // 50))
-        newX = int(round(int(item['left']) // 50))
-        newY = int(round(int(item['top']) // 50))
+        newWidth = int(item['width'])
+        newHeight = int(item['height'])
+        newX = int(item['left'])
+        newY = int(item['top'])
         fill = item['fill']
         itemId = item['id']
         holderType = HolderType.Empty
 
-        if itemId == 'furniture':
+        if itemId == 'Furniture':
             holderType = HolderType.Furniture
-        elif itemId == 'person':
+        elif itemId == 'Person':
             holderType = HolderType.Person
-        elif itemId == 'wall':
+        elif itemId == 'Wall':
             holderType = HolderType.Wall
 
         # if it's yellow it means it's movable furniture, so blank out the x and y

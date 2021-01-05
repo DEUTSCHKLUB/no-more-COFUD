@@ -28,7 +28,7 @@ function updateStatus(jobid: string, status: Status) {
   child.exec(`curl -X POST http://localhost:3003/status/${jobid}/${status}`);
 }
 
-async function main(subnetTag: string, hash: string, job: string, cpu?: number, memory?: number, storage?:number) {
+async function main(subnetTag: string, hash: string, job: string, people: number, cpu?: number, memory?: number, storage?:number) {
   // Increasing default requirements to remove some slower nodes
   if (cpu == undefined || Number.isNaN(cpu)) {
     cpu = 4;
@@ -78,7 +78,7 @@ async function main(subnetTag: string, hash: string, job: string, cpu?: number, 
       let commands = [
         "-c",
         `cd /golem/work/;
-        python3 /golem/work/cofud_solver.py 4 ${sentPackageFile} ${outputFile} > /golem/output/output.log;
+        python3 /golem/work/cofud_solver.py ${people} ${sentPackageFile} ${outputFile} > /golem/output/output.log;
         ls -lahR /golem >> /golem/output/output.log;`
       ]
 
@@ -154,10 +154,11 @@ function parseIntParam(value: string) {
 console.log(process.argv);
 
 program
-  .option('--subnet-tag <subnet>', 'set subnet name', 'community.3')
+  .option('--subnet-tag <subnet>', 'set subnet name', 'community.doc')
   .option('-d, --debug', 'output extra debugging')
   .requiredOption('-h, --hash <hash>', 'golem VM image hash', '8b71496574f9824d72c09e85f63aa578cbdf1f42bb2ad95b93556f7a')
   .requiredOption('-j, --job <string>', 'ID of job to process')
+  .requiredOption('-p, --people <int>', 'number of people', parseIntParam)
   .option('-c, --cpu <number>', '# of cores required', parseIntParam)
   .option('-m, --memory <number>', 'GB of memory required', parseIntParam)
   .option('-s, --storage <number>', 'GB of storage required', parseIntParam);
@@ -166,4 +167,4 @@ if (program.debug) {
   utils.changeLogLevel("debug");
 }
 console.log(`Using subnet: ${program.subnetTag}`);
-main(program.subnetTag, program.hash, program.job, program.cpu, program.memory, program.storage);
+main(program.subnetTag, program.hash, program.job, program.people, program.cpu, program.memory, program.storage);

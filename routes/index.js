@@ -3,6 +3,7 @@ const express = require('express'),
       path = require('path'),
       formidable = require('formidable'),
       baseJobPath = `${appRoot}/jobs/input`,
+      baseOutputPath = `${appRoot}/jobs/output`,
       child = require('child_process'),
       tree = require("directory-tree"),
       { spawn, exec, execFile } = require('child_process'),
@@ -46,7 +47,7 @@ router.post("/calc/:jobid", function(req, res) {
       fs.mkdirSync(path.join(baseJobPath, jid));
     }
 
-    fs.writeFile(path.join(baseJobPath, jid,'input.json'), JSON.stringify(filteredObj), (err) => { 
+    fs.writeFile(path.join(baseJobPath, jid,'layout.json'), JSON.stringify(filteredObj), (err) => { 
       if (err) {
         throw err; 
       } else {
@@ -57,7 +58,7 @@ router.post("/calc/:jobid", function(req, res) {
 
         // This will need your attention
 
-        child.exec(`npm run --prefix worker process -- --job ${jid} >> worker.log`, function(error, stdout, stderr) {
+        child.exec(`npm run --prefix worker process -- --job ${jid} --people ${numPeople} >> worker.log`, function(error, stdout, stderr) {
           console.log(stdout);
           console.log(stderr);
         });
@@ -142,7 +143,7 @@ router.get("/results/:jobid", async function(req, res, next) {
     let jid = req.params.jobid;
     let lookup = global.jobStatus[jid];
 
-    let outputFilename = 'output.json';
+    let outputFilename = 'layout.json';
 
     let downloadFile = path.join(baseOutputPath, jid, outputFilename);
 
@@ -153,8 +154,9 @@ router.get("/results/:jobid", async function(req, res, next) {
     });
 
   } catch (error) {
+    console.error(error)
     res.status(500).send({
-      message: "Could not download the file. " + err,
+      message: "Could not download the file. ",
     });
     /*
     console.error(error);

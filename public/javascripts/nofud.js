@@ -7,16 +7,24 @@
 
         source.addEventListener('message', message => {
             if(message.data == "Complete"){
+                console.log(`Received last message`);
                 source.close();
                 jobProgWrap.innerHTML = message.data;
-                fetch(`/results/${jobID}`,{
+                fetch(`/results/${jid}`,{
                     method:'GET'
                 }).then(response => {
                     return response.json();
                 }).then(data => {
                     let {status, items} = JSON.parse(data);
-                    // rebuild canvas here with data
-                    displayResults(items);
+                    console.log(`Received data: ${data}`);
+
+                    if(status == 1) {
+                        jobProgWrap.innerHTML = 'Success!'
+                        displayResults(items);
+                    } else {
+                        jobProgWrap.innerHTML = 'No solution found! Try reducing furniture or people.'
+                    }
+
                 }).catch(err => {
                     console.log(err);
                 });
@@ -213,9 +221,9 @@
             addToNOFUD(createObstacle());
         }, false);
         calculateButton.addEventListener('click', () => {
-            console.log("calculating...");
-
             let jobID = Date.now();
+            
+            console.log(`calculating job ${jobID}...`);            
 
             fetch(`/calc/${jobID}`,{
                 method:'POST',
@@ -231,7 +239,7 @@
             }).then(data => {
                 let {status, items} = JSON.parse(data);
                 // rebuild canvas here with data
-                displayResults(items);
+                // displayResults(items);
                 // once it's wired we'll need to poll results
                 pollJob(jobID, d.querySelector('#status'));
             }).catch(err => {
