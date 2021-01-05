@@ -15,7 +15,7 @@ $enable-grid-classes:       true;
 @import 'utilities/_sizing.scss';
 
 // components
-// @import 'imports/_html';
+@import '_html';
 
 *{
     box-sizing: border-box;

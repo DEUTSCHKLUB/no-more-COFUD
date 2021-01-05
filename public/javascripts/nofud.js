@@ -1,5 +1,22 @@
 ;(function(w,d){
-    const nfc = new fabric.Canvas('nofud-canvas'),
+    // Poll for jobs
+
+    // function pollJob(jid, output){
+    //     const jobProgWrap = output;
+    //     const source = new EventSource(`/status/${jid}`);
+
+    //     source.addEventListener('message', message => {
+    //         if(message.data == "Complete"){
+    //             source.close();
+    //             jobProgWrap.innerHTML = `<a class="btn" href="/download/${jid}">Get Prints!</a>`;
+    //         } else {
+    //             jobProgWrap.innerHTML = message.data;
+    //         }
+    //     });
+    // }
+
+    // fabric stuff
+    const nfc = new fabric.Canvas('nofud-canvas', {selection: false}),
             canvasWidth = 800,
             canvasHeight = 600,
             addNewFButton = d.querySelector("#addNewFButton"),
@@ -10,116 +27,25 @@
             calculateButton = d.querySelector("#calculateButton"),
             numPeople = d.querySelector("#numPeople"),
             grid = 50,
-            snap = 50;
+            snap = 50,
+            unitScale = 50;
 
-    // Canvas Operations Listeners
-    
-    nfc.on('object:modified', function (options) {
-        var newWidth = (Math.round(options.target.getScaledWidth() * grid) / grid);
-        var newHeight = (Math.round(options.target.getScaledHeight() * grid) / grid);
+    // create grid
 
-        if (options.target.getWidth() !== newWidth || options.target.getHeight() !== newHeight) {
-            options.target.set({ width: newWidth, height: newHeight, scaleX: 1, scaleY: 1});
+    function createGrid(){
+        for (var i = 0; i < (canvasWidth / grid); i++) {
+            nfc.add(new fabric.Line([ i * grid, 0, i * grid, canvasHeight], { type:'line', stroke: '#ccc', selectable: false, excludeFromExport: true }));
+            nfc.add(new fabric.Line([ 0, i * grid, canvasWidth, i * grid], { type: 'line', stroke: '#ccc', selectable: false, excludeFromExport: true }))
         }
-    });
+    }
     
-    nfc.on('object:scaling', options => {
-        var target = options.target,
-            w = target.width * target.scaleX,
-            h = target.height * target.scaleY,
-            snap = { // Closest snapping points
-                top: Math.round(target.top / grid) * grid,
-                left: Math.round(target.left / grid) * grid,
-                bottom: Math.round((target.top + h) / grid) * grid,
-                right: Math.round((target.left + w) / grid) * grid
-            },
-            threshold = grid,
-            dist = { // Distance from snapping points
-                top: Math.abs(snap.top - target.top),
-                left: Math.abs(snap.left - target.left),
-                bottom: Math.abs(snap.bottom - target.top - h),
-                right: Math.abs(snap.right - target.left - w)
-            },
-            attrs = {
-                scaleX: target.scaleX,
-                scaleY: target.scaleY,
-                top: target.top,
-                left: target.left
-            };
-        switch (target.__corner) {
-            case 'tl':
-                if (dist.left < dist.top && dist.left < threshold) {
-                    attrs.scaleX = (w - (snap.left - target.left)) / target.width;
-                    attrs.scaleY = (attrs.scaleX / target.scaleX) * target.scaleY;
-                    attrs.top = target.top + (h - target.height * attrs.scaleY);
-                    attrs.left = snap.left;
-                } else if (dist.top < threshold) {
-                    attrs.scaleY = (h - (snap.top - target.top)) / target.height;
-                    attrs.scaleX = (attrs.scaleY / target.scaleY) * target.scaleX;
-                    attrs.left = attrs.left + (w - target.width * attrs.scaleX);
-                    attrs.top = snap.top;
-                }
-                break;
-            case 'mt':
-                if (dist.top < threshold) {
-                    attrs.scaleY = (h - (snap.top - target.top)) / target.height;
-                    attrs.top = snap.top;
-                }
-                break;
-            case 'tr':
-                if (dist.right < dist.top && dist.right < threshold) {
-                    attrs.scaleX = (snap.right - target.left) / target.width;
-                    attrs.scaleY = (attrs.scaleX / target.scaleX) * target.scaleY;
-                    attrs.top = target.top + (h - target.height * attrs.scaleY);
-                } else if (dist.top < threshold) {
-                    attrs.scaleY = (h - (snap.top - target.top)) / target.height;
-                    attrs.scaleX = (attrs.scaleY / target.scaleY) * target.scaleX;
-                    attrs.top = snap.top;
-                }
-                break;
-            case 'ml':
-                if (dist.left < threshold) {
-                    attrs.scaleX = (w - (snap.left - target.left)) / target.width;
-                    attrs.left = snap.left;
-                }
-                break;
-            case 'mr':
-                if (dist.right < threshold) attrs.scaleX = (snap.right - target.left) / target.width;
-                break;
-            case 'bl':
-                if (dist.left < dist.bottom && dist.left < threshold) {
-                    attrs.scaleX = (w - (snap.left - target.left)) / target.width;
-                    attrs.scaleY = (attrs.scaleX / target.scaleX) * target.scaleY;
-                    attrs.left = snap.left;
-                } else if (dist.bottom < threshold) {
-                    attrs.scaleY = (snap.bottom - target.top) / target.height;
-                    attrs.scaleX = (attrs.scaleY / target.scaleY) * target.scaleX;
-                    attrs.left = attrs.left + (w - target.width * attrs.scaleX);
-                }
-                break;
-            case 'mb':
-                if (dist.bottom < threshold) attrs.scaleY = (snap.bottom - target.top) / target.height;
-                break;
-            case 'br':
-                if (dist.right < dist.bottom && dist.right < threshold) {
-                    attrs.scaleX = (snap.right - target.left) / target.width;
-                    attrs.scaleY = (attrs.scaleX / target.scaleX) * target.scaleY;
-                } else if (dist.bottom < threshold) {
-                    attrs.scaleY = (snap.bottom - target.top) / target.height;
-                    attrs.scaleX = (attrs.scaleY / target.scaleY) * target.scaleX;
-                }
-                break;
-        }
-        target.set(attrs);
-        nfc.fire('object:modified', {target: target});
-    });
+    // snap to grid
 
-    nfc.on('object:moving', function (options) {
+    nfc.on('object:moving', function(options) { 
         options.target.set({
             left: Math.round(options.target.left / grid) * grid,
             top: Math.round(options.target.top / grid) * grid
         });
-
         // Don't allow objects off the canvas
         if(options.target.getLeft() < snap) {
             options.target.setLeft(0);
@@ -138,202 +64,33 @@
             // console.log(`snapping because width ${options.target.getHeight()} left ${options.target.getTop()} cw ${canvasHeight} snap ${snap}`)
             options.target.setTop(canvasHeight - options.target.getHeight());
         }
+        checkIntersection(options);
+    });
 
-        /*
-        // Loop through objects
-        nfc.forEachObject(function (obj) {
-            if (obj === options.target) return;
-
-            // If objects intersect
-            if (options.target.isContainedWithinObject(obj) || options.target.intersectsWithObject(obj) || obj.isContainedWithinObject(options.target)) {
-
-                var distX = ((obj.getLeft() + obj.getWidth()) / 2) - ((options.target.getLeft() + options.target.getWidth()) / 2);
-                var distY = ((obj.getTop() + obj.getHeight()) / 2) - ((options.target.getTop() + options.target.getHeight()) / 2);
-
-                // Set new position
-                findNewPos(distX, distY, options.target, obj);
-            }
-
-            // Snap objects to each other horizontally
-
-            // If bottom points are on same Y axis
-            if(Math.abs((options.target.getTop() + options.target.getHeight()) - (obj.getTop() + obj.getHeight())) < snap) {
-                // Snap target BL to object BR
-                if(Math.abs(options.target.getLeft() - (obj.getLeft() + obj.getWidth())) < snap) {
-                    options.target.setLeft(obj.getLeft() + obj.getWidth());
-                    options.target.setTop(obj.getTop() + obj.getHeight() - options.target.getHeight());
-                }
-
-                // Snap target BR to object BL
-                if(Math.abs((options.target.getLeft() + options.target.getWidth()) - obj.getLeft()) < snap) {
-                    options.target.setLeft(obj.getLeft() - options.target.getWidth());
-                    options.target.setTop(obj.getTop() + obj.getHeight() - options.target.getHeight());
-                }
-            }
-
-            // If top points are on same Y axis
-            if(Math.abs(options.target.getTop() - obj.getTop()) < snap) {
-                // Snap target TL to object TR
-                if(Math.abs(options.target.getLeft() - (obj.getLeft() + obj.getWidth())) < snap) {
-                    options.target.setLeft(obj.getLeft() + obj.getWidth());
-                    options.target.setTop(obj.getTop());
-                }
-
-                // Snap target TR to object TL
-                if(Math.abs((options.target.getLeft() + options.target.getWidth()) - obj.getLeft()) < snap) {
-                    options.target.setLeft(obj.getLeft() - options.target.getWidth());
-                    options.target.setTop(obj.getTop());
-                }
-            }
-
-            // Snap objects to each other vertically
-
-            // If right points are on same X axis
-            if(Math.abs((options.target.getLeft() + options.target.getWidth()) - (obj.getLeft() + obj.getWidth())) < snap) {
-                // Snap target TR to object BR
-                if(Math.abs(options.target.getTop() - (obj.getTop() + obj.getHeight())) < snap) {
-                    options.target.setLeft(obj.getLeft() + obj.getWidth() - options.target.getWidth());
-                    options.target.setTop(obj.getTop() + obj.getHeight());
-                }
-
-                // Snap target BR to object TR
-                if(Math.abs((options.target.getTop() + options.target.getHeight()) - obj.getTop()) < snap) {
-                    options.target.setLeft(obj.getLeft() + obj.getWidth() - options.target.getWidth());
-                    options.target.setTop(obj.getTop() - options.target.getHeight());
-                }
-            }
-
-            // If left points are on same X axis
-            if(Math.abs(options.target.getLeft() - obj.getLeft()) < snap) {
-                // Snap target TL to object BL
-                if(Math.abs(options.target.getTop() - (obj.getTop() + obj.getHeight())) < snap) {
-                    options.target.setLeft(obj.getLeft());
-                    options.target.setTop(obj.getTop() + obj.getHeight());
-                }
-
-                // Snap target BL to object TL
-                if(Math.abs((options.target.getTop() + options.target.getHeight()) - obj.getTop()) < snap) {
-                    options.target.setLeft(obj.getLeft());
-                    options.target.setTop(obj.getTop() - options.target.getHeight());
-                }
-            }
+    nfc.on('object:modified', function(options) { 	  	
+        var newWidth = (Math.round(options.target.getWidth() / grid)) * grid;
+        var newHeight = (Math.round(options.target.getHeight() / grid)) * grid;
+        
+        options.target.set({ 
+            width: newWidth, 
+            height: newHeight, 
+            scaleX: 1, 
+            scaleY: 1
         });
 
-        options.target.setCoords();
-
-        // If objects still overlap
-
-        var outerAreaLeft = null,
-        outerAreaTop = null,
-        outerAreaRight = null,
-        outerAreaBottom = null;
-
-        nfc.forEachObject(function (obj) {
-            if (obj === options.target) return;
-
-            if (options.target.isContainedWithinObject(obj) || options.target.intersectsWithObject(obj) || obj.isContainedWithinObject(options.target)) {
-
-                var intersectLeft = null,
-                intersectTop = null,
-                intersectWidth = null,
-                intersectHeight = null,
-                intersectSize = null,
-                targetLeft = options.target.getLeft(),
-                targetRight = targetLeft + options.target.getWidth(),
-                targetTop = options.target.getTop(),
-                targetBottom = targetTop + options.target.getHeight(),
-                objectLeft = obj.getLeft(),
-                objectRight = objectLeft + obj.getWidth(),
-                objectTop = obj.getTop(),
-                objectBottom = objectTop + obj.getHeight();
-
-                // Find intersect information for X axis
-                if(targetLeft >= objectLeft && targetLeft <= objectRight) {
-                    intersectLeft = targetLeft;
-                    intersectWidth = obj.getWidth() - (intersectLeft - objectLeft);
-
-                } else if(objectLeft >= targetLeft && objectLeft <= targetRight) {
-                    intersectLeft = objectLeft;
-                    intersectWidth = options.target.getWidth() - (intersectLeft - targetLeft);
-                }
-
-                // Find intersect information for Y axis
-                if(targetTop >= objectTop && targetTop <= objectBottom) {
-                    intersectTop = targetTop;
-                    intersectHeight = obj.getHeight() - (intersectTop - objectTop);
-
-                } else if(objectTop >= targetTop && objectTop <= targetBottom) {
-                    intersectTop = objectTop;
-                    intersectHeight = options.target.getHeight() - (intersectTop - targetTop);
-                }
-
-                // Find intersect size (this will be 0 if objects are touching but not overlapping)
-                if(intersectWidth > 0 && intersectHeight > 0) {
-                    intersectSize = intersectWidth * intersectHeight;
-                }
-
-                // Set outer snapping area
-                if(obj.getLeft() < outerAreaLeft || outerAreaLeft == null) {
-                    outerAreaLeft = obj.getLeft();
-                }
-
-                if(obj.getTop() < outerAreaTop || outerAreaTop == null) {
-                    outerAreaTop = obj.getTop();
-                }
-
-                if((obj.getLeft() + obj.getWidth()) > outerAreaRight || outerAreaRight == null) {
-                    outerAreaRight = obj.getLeft() + obj.getWidth();
-                }
-
-                if((obj.getTop() + obj.getHeight()) > outerAreaBottom || outerAreaBottom == null) {
-                    outerAreaBottom = obj.getTop() + obj.getHeight();
-                }
-
-                // If objects are intersecting, reposition outside all shapes which touch
-                if(intersectSize) {
-                    var distX = (outerAreaRight / 2) - ((options.target.getLeft() + options.target.getWidth()) / 2);
-                    var distY = (outerAreaBottom / 2) - ((options.target.getTop() + options.target.getHeight()) / 2);
-
-                    // Set new position
-                    findNewPos(distX, distY, options.target, obj);
-                }
-            }
-        });
-        */
+        checkIntersection(options);
     });
 
     // UI Functions
 
-    function findNewPos(distX, distY, target, obj) {
-        // See whether to focus on X or Y axis
-        if(Math.abs(distX) > Math.abs(distY)) {
-            if (distX > 0) {
-                target.setLeft(obj.getLeft() - target.getWidth());
-            } else {
-                target.setLeft(obj.getLeft() + obj.getWidth());
+    function checkIntersection(options) {
+        options.target.setCoords();
+        nfc.forEachObject(function(obj) {
+            if (obj === options.target) return;
+            if(obj.selectable){
+                obj.set('stroke', options.target.intersectsWithObject(obj, true) ? '#FF0000' : '');
             }
-        } else {
-            if (distY > 0) {
-                target.setTop(obj.getTop() - target.getHeight());
-            } else {
-                target.setTop(obj.getTop() + obj.getHeight());
-            }
-        }
-    }
-    
-    function createGrid(){
-        for (var i = 0; i < (800 / grid); i++) {
-            nfc.add(new fabric.Line([i * grid, 0, i * grid, 600], {
-                stroke: '#000',
-                selectable: false,
-                excludeFromExport: true
-            }));
-            nfc.add(new fabric.Line([0, i * grid, 800, i * grid], {
-                stroke: '#000',
-                selectable: false,
-                excludeFromExport: true
-            }))
-        }
+        });
     }
 
     function addToNOFUD(obj){
@@ -346,7 +103,42 @@
         nfc.remove(nfc.getActiveObject());
     }
 
-    function createObstacle(type="furniture",w=100,h=100){
+    function displayResults(listItems) {
+        nfc.clear();
+        createGrid();
+
+        if(listItems !== undefined) {
+            var len = listItems.length;		
+            for(var i = 0; i< len; i+=1 ){
+                var item = listItems[i];
+                nfc.add(new fabric.Rect({ 
+                    left: item.left * unitScale, 
+                    top: item.top * unitScale, 
+                    width: item.width * unitScale, 
+                    height: item.height * unitScale, 
+                    type: 'rectangle',
+                    fill: item.id == "Person" ? "aqua" : item.id == "Wall" ? "purple" : "yellow", 
+                    stroke:'',
+                    hasRotatingPoint: false,
+                    originX: 'left', 
+                    originY: 'top',
+                    id: item.id !== undefined ? item.id : '', 
+                    hasControls: true,		
+                    centeredRotation: true,
+                    strokeUniform: true,
+                    transparentCorners: false,
+                    minScaleLimit: 1,
+                    maxWidth: canvasWidth,
+                    maxHeight: canvasHeight,
+                }));		
+            }
+            nfc.renderAll();
+        }else{
+            console.log('Error importing results data.');
+        }
+    }
+
+    function createObstacle(type="Furniture",w=100,h=100){
         let obst = new fabric.Rect({
             id: `${type}`,
             width: w, height: h,
@@ -354,19 +146,22 @@
             originX: "left",
             originY: "top",
             lockRotation: true,
+            hasControls: true,
             hasRotatingPoint: false,
-            perPixelTargetFind: true,
+            perPixelTargetFind: false,
             minScaleLimit: 1,
             maxWidth: canvasWidth,
             maxHeight: canvasHeight,
-            fill: type == 'wall' ? 'purple' : 'yellow',
+            fill: type == 'Wall' ? 'purple' : 'yellow',
             angle: 0,
-            strokeWidth: 0,
+            stroke: '',
+            strokeUniform: true,
+            transparentCorners: false
         });
         return obst;
     }
 
-        function createPerson(type="person",w=50,h=50){
+    function createPerson(type="Person",w=50,h=50){
         let obst = new fabric.Rect({
             id: `${type}`,
             width: w, height: h,
@@ -374,9 +169,15 @@
             originX: "left",
             originY: "top",
             lockRotation: true,
+            lockScalingX: true,
+            lockScalingY: true,
             fill: 'aqua',
             angle: 0,
             strokeWidth: 0,
+            stroke: '',
+            hasRotatingPoint: false,
+            hasControls: true,
+            transparentCorners: false
         });
         return obst;
     }
@@ -384,10 +185,10 @@
     function initNOFUD(){
         
         addNewFButton.addEventListener('click', () =>{
-            addToNOFUD(createObstacle("furniture"));
+            addToNOFUD(createObstacle("Furniture"));
         },false);
         addNewWButton.addEventListener('click', () =>{
-            addToNOFUD(createObstacle("wall"));
+            addToNOFUD(createObstacle("Wall"));
         },false);
         addNewPButton.addEventListener('click', () =>{
             addToNOFUD(createPerson());
@@ -403,7 +204,9 @@
         calculateButton.addEventListener('click', () => {
             console.log("calculating...");
 
-            fetch('/calc/',{
+            let jobID = Date.now();
+
+            fetch(`/calc/${jobID}`,{
                 method:'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -412,8 +215,15 @@
                     numPeople:parseInt(numPeople.value),
                     canvas:nfc.toJSON(['id'])
                 })
-            }).then(response => response.json())
-            .then(data => console.log(data));
+            }).then(response => {
+                return response.json();
+            }).then(data => {
+                let {status, items} = JSON.parse(data);
+                // rebuild canvas here with data
+                displayResults(items);
+            }).catch(err => {
+                console.log(err);
+            });
 
         },false);
 

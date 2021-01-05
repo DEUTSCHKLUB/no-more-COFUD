@@ -1,30 +1,45 @@
-// colors
-$red-light:scale-color($red, $lightness: 45%);
-$red:#c25127;
-$red-dark:scale-color($red, $lightness: -45%);
-$yellow-light:scale-color($yellow, $lightness: 75%);
-$yellow:#e7ce7e;
-$yellow-dark:scale-color($yellow, $lightness: -45%);
-$black:#292210;
-$white:#faf8f0;
+$white:white;
+$silver:silver;
+$gray:gray;
+$black:black;
+$red:red;
+$maroon:maroon;
+$yellow:rgb(237, 219, 18);
+$olive:olive;
+$lime:lime;
+$green:green;
+$aqua:aqua;
+$teal:teal;
+$blue:blue;
+$navy:navy;
+$fuchsia:fuchsia;
+$purple:purple;
 
 $colors: (
-    "red-light":$red-light,
-    "red":$red,
-    "red-dark":$red-dark,
-    "yellow-light":$yellow-light,
-    "yellow":$yellow,
-    "yellow-dark":$yellow-dark,
-    "black":$black,
-    "white":$white
+  "white":$white,
+  "silver":$silver,
+  "gray":$gray,
+  "black":$black,
+  "red":$red,
+  "maroon":$maroon,
+  "yellow":$yellow,
+  "olive":$olive,
+  "lime":$lime,
+  "green":$green,
+  "aqua":$aqua,
+  "teal":$teal,
+  "blue":$blue,
+  "navy":$navy,
+  "fuchsia":$fuchsia,
+  "purple":$purple
 );
 
 @each $name, $value in $colors {
     .bg-#{$name} {
-        background: $value;
+        background: $value !important;
     }
     .text-#{$name} {
-        color: $value;
+        color: $value !important;
     }
 }
 
