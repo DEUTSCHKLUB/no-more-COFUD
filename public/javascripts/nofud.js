@@ -1,19 +1,30 @@
 ;(function(w,d){
     // Poll for jobs
 
-    // function pollJob(jid, output){
-    //     const jobProgWrap = output;
-    //     const source = new EventSource(`/status/${jid}`);
+    function pollJob(jid, output){
+        const jobProgWrap = output;
+        const source = new EventSource(`/status/${jid}`);
 
-    //     source.addEventListener('message', message => {
-    //         if(message.data == "Complete"){
-    //             source.close();
-    //             jobProgWrap.innerHTML = `<a class="btn" href="/download/${jid}">Get Prints!</a>`;
-    //         } else {
-    //             jobProgWrap.innerHTML = message.data;
-    //         }
-    //     });
-    // }
+        source.addEventListener('message', message => {
+            if(message.data == "Complete"){
+                source.close();
+                jobProgWrap.innerHTML = message.data;
+                fetch(`/results/${jobID}`,{
+                    method:'GET'
+                }).then(response => {
+                    return response.json();
+                }).then(data => {
+                    let {status, items} = JSON.parse(data);
+                    // rebuild canvas here with data
+                    displayResults(items);
+                }).catch(err => {
+                    console.log(err);
+                });
+            } else {
+                jobProgWrap.innerHTML = message.data;
+            }
+        });
+    }
 
     // fabric stuff
     const nfc = new fabric.Canvas('nofud-canvas', {selection: false}),
@@ -221,6 +232,8 @@
                 let {status, items} = JSON.parse(data);
                 // rebuild canvas here with data
                 displayResults(items);
+                // once it's wired we'll need to poll results
+                pollJob(jobID, d.querySelector('#status'));
             }).catch(err => {
                 console.log(err);
             });
