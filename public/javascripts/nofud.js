@@ -1,7 +1,7 @@
 ;(function(w,d){
     const nfc = new fabric.Canvas('nofud-canvas'),
-            canvasWidth = document.getElementById('nofud-canvas').width,
-            canvasHeight = document.getElementById('nofud-canvas').height,
+            canvasWidth = 800,
+            canvasHeight = 600,
             addNewFButton = d.querySelector("#addNewFButton"),
             addNewWButton = d.querySelector("#addNewWButton"),
             addNewPButton = d.querySelector("#addNewPButton"),
@@ -130,13 +130,16 @@
         }
 
         if((options.target.getWidth() + options.target.getLeft()) > (canvasWidth - snap)) {
+            // console.log(`snapping because width ${options.target.getWidth()} left ${options.target.getLeft()} cw ${canvasWidth} snap ${snap}`)
             options.target.setLeft(canvasWidth - options.target.getWidth());
         }
 
         if((options.target.getHeight() + options.target.getTop()) > (canvasHeight - snap)) {
+            // console.log(`snapping because width ${options.target.getHeight()} left ${options.target.getTop()} cw ${canvasHeight} snap ${snap}`)
             options.target.setTop(canvasHeight - options.target.getHeight());
         }
 
+        /*
         // Loop through objects
         nfc.forEachObject(function (obj) {
             if (obj === options.target) return;
@@ -296,6 +299,7 @@
                 }
             }
         });
+        */
     });
 
     // UI Functions
@@ -318,19 +322,18 @@
     }
     
     function createGrid(){
-        // for (var i = 0; i < (800 / grid); i++) {
-        //     nfc.add(new fabric.Line([i * grid, 0, i * grid, 600], {
-        //         stroke: '#ddd',
-        //         selectable: false,
-        //         excludeFromExport: true
-        //     }));
-        //     nfc.add(new fabric.Line([0, i * grid, 800, i * grid], {
-        //         stroke: '#ddd',
-        //         selectable: false,
-        //         excludeFromExport: true
-        //     }))
-        // }
-        return false;
+        for (var i = 0; i < (800 / grid); i++) {
+            nfc.add(new fabric.Line([i * grid, 0, i * grid, 600], {
+                stroke: '#000',
+                selectable: false,
+                excludeFromExport: true
+            }));
+            nfc.add(new fabric.Line([0, i * grid, 800, i * grid], {
+                stroke: '#000',
+                selectable: false,
+                excludeFromExport: true
+            }))
+        }
     }
 
     function addToNOFUD(obj){
