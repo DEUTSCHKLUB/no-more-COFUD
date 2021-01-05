@@ -8,6 +8,10 @@ This type of calculation can be very resource intensive so this project allows t
 
 Think of it this way: every extra person we can safely fit inside a building is another person who can stay employed or enjoy a nice meal out in these trying times!
 
+[Demo Video](https://youtu.be/m0ow0W5JwBI)
+
+*Link to the hosted copy shared with a member of the golem comms team*
+
 ## Use ##
 The web interface allows you to layout the room, furniture, and people that should fit inside the room.
 
